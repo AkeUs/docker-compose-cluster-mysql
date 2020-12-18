@@ -1,0 +1,58 @@
+version: "3"
+
+services: 
+
+  management_node:
+    container_name: management1
+    image: mysql/mysql-cluster:8.0
+    hostname: management1
+    command: ["ndb_mgmd"]
+    networks: 
+      net:
+        ipv4_address: 192.168.0.2
+
+  data_node_1:
+    container_name: ndb1
+    image: mysql/mysql-cluster:8.0
+    hostname: ndb1
+    command: ["ndbd"]
+    networks: 
+      net:
+        ipv4_address: 192.168.0.3
+    depends_on: 
+      - management_node
+
+  data_node_2:
+    container_name: ndb2
+    image: mysql/mysql-cluster:8.0
+    hostname: ndb2
+    command: ["ndbd"]
+    networks: 
+      net:
+        ipv4_address: 192.168.0.4
+    depends_on: 
+      - management_node
+
+  server_node:
+    container_name: mysql1
+    image: mysql/mysql-cluster:8.0
+    hostname: mysql1
+    ports: 
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    command: ["mysqld"]
+    networks: 
+      net:
+        ipv4_address: 192.168.0.10
+    depends_on: 
+      - management_node
+      - data_node_1
+      - data_node_2
+
+networks: 
+  net: 
+    driver: bridge
+    ipam: 
+      config: 
+        - subnet: 192.168.0.0/16
